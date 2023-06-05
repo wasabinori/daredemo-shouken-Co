@@ -4,6 +4,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
+import "./IERC6551Registry.sol";
+import "./ERC6551BytecodeLib.sol";
+import "hardhat/console.sol";
+import "./IERC20.sol";
 
 error PriceNotMet(address nftAddress, uint256 tokenId, uint256 price);
 error NotListed(address nftAddress, uint256 tokenId);
@@ -79,8 +84,7 @@ contract Market is ReentrancyGuard {
 
     function listItem(
         address nftAddress,
-        uint256 tokenId,
-        uint256 price
+        uint256 tokenId
     )
         external
         notListed(nftAddress, tokenId)
@@ -90,10 +94,8 @@ contract Market is ReentrancyGuard {
         if (nft.getApproved(tokenId) != address(this)) {
             revert NotApprovedForMarketplace();
         }
-
-        //price feed using chianlink
-
-
+        uint256 price = 10000000;
+        
         s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
         emit ItemListed(msg.sender, nftAddress, tokenId, price);
     }
@@ -114,9 +116,14 @@ contract Market is ReentrancyGuard {
         isListed(nftAddress, tokenId)
     {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
-        if (msg.value < listedItem.price) {
-            revert PriceNotMet(nftAddress, tokenId, listedItem.price);
-        }
+        address tbaAccountAddress = getAccount(nftAddress, tokenId);
+
+        address linkTokenAddress = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
+        IERC20 linkTokneContract = IERC20(linkTokenAddress);
+        uint256 linkBalance = linkTokneContract.balanceOf(tbaAccountAddress);
+
+
+
         s_proceeds[listedItem.seller] += msg.value;
         
         delete (s_listings[nftAddress][tokenId]);
@@ -149,5 +156,24 @@ contract Market is ReentrancyGuard {
     function getProceeds(address seller) external view returns (uint256) {
         return s_proceeds[seller];
     }
+
+
+    function getAccount(
+        address nftAddress,
+        uint256 tokenId
+    ) public view returns (address) {
+        bytes32 bytecodeHash = keccak256(
+            ERC6551BytecodeLib.getCreationCode(
+                0x2D25602551487C3f3354dD80D76D54383A243358,
+                11155111,
+                nftAddress,
+                tokenId,
+                0
+            )
+        );
+
+        return Create2.computeAddress(bytes32(0), bytecodeHash);
+    }
+    
 }
 
