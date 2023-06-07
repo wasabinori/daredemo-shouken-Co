@@ -122,8 +122,12 @@ contract NftMarketplace is ReentrancyGuard {
         if (nft.getApproved(tokenId) != address(this)) {
             revert NotApprovedForMarketplace();
         }
-        uint256 price = 100000;
 
+        //uint256 price = 100000;
+        //initialPrice
+        uint256 price = priceCalculation(nftAddress, tokenId);
+
+        //ここでpriceを紐づけてる
         s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
         emit ItemListed(msg.sender, nftAddress, tokenId, price);
     }
@@ -153,6 +157,14 @@ contract NftMarketplace is ReentrancyGuard {
         nonReentrant
     {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
+
+
+        //updatePrice
+        uint256 price = priceCalculation(nftAddress, tokenId);
+
+        s_listings[nftAddress][tokenId].price = price;
+        //
+
         if (msg.value < listedItem.price) {
             revert PriceNotMet(nftAddress, tokenId, listedItem.price);
         }
@@ -166,23 +178,23 @@ contract NftMarketplace is ReentrancyGuard {
     }
 
     //This fx isn't using
-    // function updateListing(
-    //     address nftAddress,
-    //     uint256 tokenId,
-    //     uint256 newPrice
-    // )
-    //     external
-    //     isListed(nftAddress, tokenId)
-    //     nonReentrant
-    //     isOwner(nftAddress, tokenId, msg.sender)
-    // {
-    //     if (newPrice == 0) {
-    //         revert PriceMustBeAboveZero();
-    //     }
+    function updateListing(
+        address nftAddress,
+        uint256 tokenId,
+        uint256 newPrice
+    )
+        external
+        isListed(nftAddress, tokenId)
+        nonReentrant
+        isOwner(nftAddress, tokenId, msg.sender)
+    {
+        if (newPrice == 0) {
+            revert PriceMustBeAboveZero();
+        }
 
-    //     s_listings[nftAddress][tokenId].price = newPrice;
-    //     emit ItemListed(msg.sender, nftAddress, tokenId, newPrice);
-    // }
+        s_listings[nftAddress][tokenId].price = newPrice;
+        emit ItemListed(msg.sender, nftAddress, tokenId, newPrice);
+    }
 
     //This fx isn't using
     // function withdrawProceeds() external {
