@@ -56,15 +56,25 @@ contract NftMarketplace is ReentrancyGuard {
         address _tbaAddress
     );
 
+    event priceFixed(
+        address indexed nftAddress,
+        uint256 indexed tokenId,
+        address indexed tbaAccountAddress,
+        uint256 price
+    );
+
+    address[] private s_listingsKeyAddress;
+    uint256[] private s_listingsKeyTokenId;
+
         // Goerli Testnet Price Feed Address == xx / USD 
-    address[] public feedAggregatorAssress = [
+    address[] private feedAggregatorAssress = [
         0x0d79df66BE487753B02D015Fb622DED7f0E9798d, // DAI
         0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e, // ETH
         0x48731cF7e84dc94C5f84577882c14Be11a5B7456, // LINK
         0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7  // USDC
     ];
 
-    address[] public erc20ContractAddress = [
+    address[] private erc20ContractAddress = [
         0x73967c6a0904aA032C103b4104747E88c566B1A2, // DAI
         0xdD69DB25F6D620A7baD3023c5d32761D353D3De9, // ETH
         0x326C977E6efc84E512bB9C30f76E30c160eD06FB, // LINK
@@ -151,24 +161,21 @@ contract NftMarketplace is ReentrancyGuard {
     }
 
     function buyItem(address nftAddress, uint256 tokenId)
-        external
+        public
         payable
-        isListed(nftAddress, tokenId)
         nonReentrant
+        isListed(nftAddress, tokenId)
     {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
 
-
         //updatePrice
-        uint256 price = priceCalculation(nftAddress, tokenId);
-
-        s_listings[nftAddress][tokenId].price = price;
+        // uint256 price = priceCalculation(nftAddress, tokenId);
+        // s_listings[nftAddress][tokenId].price = price;
         //
 
         if (msg.value < listedItem.price) {
             revert PriceNotMet(nftAddress, tokenId, listedItem.price);
         }
-
 
 
         s_proceeds[listedItem.seller] += msg.value;
@@ -177,36 +184,22 @@ contract NftMarketplace is ReentrancyGuard {
         emit ItemBought(msg.sender, nftAddress, tokenId, listedItem.price);
     }
 
-    //This fx isn't using
-    function updateListing(
+    function buyFlow(
         address nftAddress,
-        uint256 tokenId,
-        uint256 newPrice
-    )
-        external
+        uint256 tokenId
+    ) 
+        external 
+        nonReentrant 
         isListed(nftAddress, tokenId)
-        nonReentrant
-        isOwner(nftAddress, tokenId, msg.sender)
     {
-        if (newPrice == 0) {
-            revert PriceMustBeAboveZero();
-        }
+            
+        address tbaAccountAddress = getAccount(nftAddress, tokenId);
+        Listing memory listedItem = s_listings[nftAddress][tokenId];
+        listedItem.price = priceCalculation(nftAddress, tokenId);
+        emit priceFixed(nftAddress, tokenId, tbaAccountAddress, listedItem.price);
 
-        s_listings[nftAddress][tokenId].price = newPrice;
-        emit ItemListed(msg.sender, nftAddress, tokenId, newPrice);
+        buyItem(nftAddress, tokenId);
     }
-
-    //This fx isn't using
-    // function withdrawProceeds() external {
-    //     uint256 proceeds = s_proceeds[msg.sender];
-    //     if (proceeds <= 0) {
-    //         revert NoProceeds();
-    //     }
-    //     s_proceeds[msg.sender] = 0;
-
-    //     (bool success, ) = payable(msg.sender).call{value: proceeds}("");
-    //     require(success, "Transfer failed");
-    // }
 
     function getListing(address nftAddress, uint256 tokenId)
         external
@@ -239,13 +232,10 @@ contract NftMarketplace is ReentrancyGuard {
         return Create2.computeAddress(bytes32(0), bytecodeHash);
     }
 
-    function priceCalculation(address nftAddress, uint256 tokenId) public view returns (uint256 totalPrice) {
+    function priceCalculation(address nftAddress, uint256 tokenId) public returns (uint256 totalPrice) {
         address _tbaAddress = getAccount(nftAddress, tokenId);
         uint256 n = 0;
 
-        //配列n番目のerc20addressのインスタンスを作成
-        //TBAが持つerc20のbalanceを算出
-        //totalPriceへ加算
         AggregatorInterface dataFeed;
         while(n != feedAggregatorAssress.length) {
         IERC20 checkAddressBalance = IERC20(erc20ContractAddress[n]);
@@ -262,8 +252,18 @@ contract NftMarketplace is ReentrancyGuard {
 
         n ++;
         }
-        //emit CalculatePrice(totalPrice, _tbaAddress);
+        emit CalculatePrice(totalPrice, _tbaAddress);
         return totalPrice;
+    }
+
+        function getAllNft() external view returns (
+        address[] memory nftAddressList,
+        uint256[] memory tokenIdList
+        ) {
+        nftAddressList = s_listingsKeyAddress;
+        tokenIdList = s_listingsKeyTokenId;
+        
+        return (nftAddressList, tokenIdList);
     }
 
 }
