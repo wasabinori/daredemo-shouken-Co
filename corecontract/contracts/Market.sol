@@ -118,8 +118,8 @@ contract Market is ReentrancyGuard {
         if (nft.getApproved(tokenId) != address(this)) {
             revert NotApprovedForMarketplace();
         }
-        uint256 price = 1000000000000000000;
-        //uint256 price = caluculatePrice(nftAddress, tokenId);
+        
+        uint256 price = caluculatePrice(nftAddress, tokenId);
 
         s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
         s_listingsKeyAddress.push(nftAddress);
