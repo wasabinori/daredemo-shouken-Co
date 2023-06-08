@@ -34,17 +34,9 @@ export default function WalletConnect (): any {
             }
         };
 
-        useEffect(() => {
-          if (connected && address) {
-            // NFT情報の取得処理を実行し、nftListを更新する
-            // 例: const nftList = await fetchNFTList(address);
-            // setNftList(nftList);
-          }
-        }, [connected, address]);
 
-        const navigateToMyPage = () => {
-          // マイページへの遷移処理を実装する
-          // 例: history.push('/mypage');
+        const navigateToMyPage = () =>  {
+            window.location.href = '/MyPage';
         };
 
         return (
