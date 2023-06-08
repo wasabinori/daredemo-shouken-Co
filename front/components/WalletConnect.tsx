@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-export default function WalletConnect (): any {
+export default function WalletConnect ({address, setAddress} :any ): any {
 
-    const [address, setAddress] = useState('');
 
     const connectToMetamask = async () => {
         if (typeof window.ethereum !== 'undefined') {
@@ -27,8 +26,8 @@ export default function WalletConnect (): any {
 
 
     return(
-        <div className="max-w-6xl mx-auto OutermostBox sticky flex flex-row justify-between shadow-lg px-2 py-2">
-            <div className="">
+        <div className="max-w-6xl mx-auto OutermostBox sticky  justify-between shadow-lg px-2 py-2">
+            <div className="flex flex-row gap-x-5 gap-y-20">
                 <h1 className='font-sans font-medium text-5xl'>6551marketplace</h1>
                 <button 
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
@@ -36,8 +35,8 @@ export default function WalletConnect (): any {
                 >
                 connect wallet
                 </button>
-                {address && <p>Connected Address: {address}</p>}
             </div>
+            
         </div>
     );
 }
