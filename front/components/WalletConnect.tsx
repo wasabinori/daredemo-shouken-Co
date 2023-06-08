@@ -8,13 +8,12 @@ import {
   } from '@ethersproject/providers';
 
 
-// declare global {
-// interface Window {
-//     ethereum?: ethers.providers.ExternalProvider;
-//     }
-// }
-
 export default function WalletConnect (): any {
+
+    const [address, setAddress] = useState<string | null>(null);
+    const [nftList, setNftList] = useState<string[]>([]);
+    const [connected, setConnected] = useState<boolean>(false);
+
     const connectToMetamask = async () => {
         if (typeof window.ethereum !== 'undefined') {
             try {
@@ -23,7 +22,9 @@ export default function WalletConnect (): any {
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
                 // 接続されたアカウントの情報を取得
-                const address = await signer.getAddress();
+                const connectedAddress = await signer.getAddress();
+                setAddress(connectedAddress);
+                setConnected(true);
                 console.log('Connected address:', address);
               } catch (error) {
                 console.error('Failed to connect to Metamask:', error);
@@ -31,17 +32,41 @@ export default function WalletConnect (): any {
             } else {
               console.error('Metamask not detected');
             }
-        }
+        };
 
+        useEffect(() => {
+          if (connected && address) {
+            // NFT情報の取得処理を実行し、nftListを更新する
+            // 例: const nftList = await fetchNFTList(address);
+            // setNftList(nftList);
+          }
+        }, [connected, address]);
 
-    return(
-        <div>
-            <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            onClick={connectToMetamask}
-            >
-            connect wallet
-            </button>
-        </div>
-    );
-}
+        const navigateToMyPage = () => {
+          // マイページへの遷移処理を実装する
+          // 例: history.push('/mypage');
+        };
+
+        return (
+          <div>
+            {connected ? (
+              <div>
+                <p>Connected address: {address}</p>
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+                  onClick={navigateToMyPage}
+                >
+                  Go to My Page
+                </button>
+              </div>
+            ) : (
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+                onClick={connectToMetamask}
+              >
+                Connect Wallet
+              </button>
+            )}
+          </div>
+        );
+      }
