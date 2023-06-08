@@ -53,13 +53,21 @@ contract Market is ReentrancyGuard {
 
     mapping(address => mapping(uint256 => Listing)) private s_listings;
     mapping(address => uint256) private s_proceeds;
-    
 
-    address[] public tokenList = 
-        [0xe27658a36cA8A59fE5Cc76a14Bde34a51e587ab4]; // USDC
+    address[] private s_listingsKeyAddress;
+    uint256[] private s_listingsKeyTokenId;
 
-    address[] public oracleList = 
-        [0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7]; // USDC
+    address[] private oracleList = 
+        [0x0d79df66BE487753B02D015Fb622DED7f0E9798d, // DAI
+        0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e, // ETH
+        0x48731cF7e84dc94C5f84577882c14Be11a5B7456, // LINK
+        0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7];  // USDC
+
+    address[] private tokenList = 
+        [0x73967c6a0904aA032C103b4104747E88c566B1A2, // DAI
+        0xdD69DB25F6D620A7baD3023c5d32761D353D3De9, // ETH
+        0x326C977E6efc84E512bB9C30f76E30c160eD06FB, // LINK
+        0xd35CCeEAD182dcee0F148EbaC9447DA2c4D449c4]; // USDC
     
 
     modifier notListed(
@@ -110,10 +118,12 @@ contract Market is ReentrancyGuard {
         if (nft.getApproved(tokenId) != address(this)) {
             revert NotApprovedForMarketplace();
         }
-
-        uint256 price = caluculatePrice(nftAddress, tokenId);
+        uint256 price = 1000000000000000000;
+        //uint256 price = caluculatePrice(nftAddress, tokenId);
 
         s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
+        s_listingsKeyAddress.push(nftAddress);
+        s_listingsKeyTokenId.push(tokenId);
         emit ItemListed(msg.sender, nftAddress, tokenId, price);
     }
 
@@ -171,6 +181,8 @@ contract Market is ReentrancyGuard {
         require(success, "Transfer failed");
     }*/
 
+    
+
     /////////////////////
     // Getter Functions //
     /////////////////////
@@ -227,6 +239,17 @@ contract Market is ReentrancyGuard {
         return totalBalance;
         
     }
-    
+
+    function getAllNft() external view returns (
+        address[] memory nftAddressList,
+        uint256[] memory tokenIdList
+        ) {
+        nftAddressList = s_listingsKeyAddress;
+        tokenIdList = s_listingsKeyTokenId;
+        
+        return (nftAddressList, tokenIdList);
+    }
+
+     
 }
 
