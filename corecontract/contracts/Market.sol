@@ -5,10 +5,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol";
 import "./IERC6551Registry.sol";
 import "./ERC6551BytecodeLib.sol";
 import "hardhat/console.sol";
-import "./IERC20.sol";
 
 error PriceNotMet(address nftAddress, uint256 tokenId, uint256 price);
 error NotListed(address nftAddress, uint256 tokenId);
@@ -43,8 +44,23 @@ contract Market is ReentrancyGuard {
         uint256 price
     );
 
+    event priceFixed(
+        address indexed nftAddress,
+        uint256 indexed tokenId,
+        address indexed tbaAccountAddress,
+        uint256 price
+    );
+
     mapping(address => mapping(uint256 => Listing)) private s_listings;
     mapping(address => uint256) private s_proceeds;
+    
+
+    address[] public tokenList = 
+        [0xe27658a36cA8A59fE5Cc76a14Bde34a51e587ab4]; // USDC
+
+    address[] public oracleList = 
+        [0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7]; // USDC
+    
 
     modifier notListed(
         address nftAddress,
@@ -94,8 +110,9 @@ contract Market is ReentrancyGuard {
         if (nft.getApproved(tokenId) != address(this)) {
             revert NotApprovedForMarketplace();
         }
-        uint256 price = 10000000;
-        
+
+        uint256 price = caluculatePrice(nftAddress, tokenId);
+
         s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
         emit ItemListed(msg.sender, nftAddress, tokenId, price);
     }
@@ -109,20 +126,33 @@ contract Market is ReentrancyGuard {
         emit ItemCanceled(msg.sender, nftAddress, tokenId);
     }
 
-    function buyItem(address nftAddress, uint256 tokenId)
+    function buyFlow(
+        address nftAddress,
+        uint256 tokenId
+    )
         external
+        nonReentrant
+        isListed(nftAddress, tokenId)
+    {
+        address tbaAccountAddress = getAccount(nftAddress, tokenId);
+        Listing memory listedItem = s_listings[nftAddress][tokenId];
+        listedItem.price = caluculatePrice(nftAddress, tokenId);
+        emit priceFixed(nftAddress, tokenId, tbaAccountAddress,listedItem.price);
+
+        buyItem(nftAddress, tokenId);
+    }
+
+    function buyItem(address nftAddress, uint256 tokenId)
         payable
+        public
         nonReentrant
         isListed(nftAddress, tokenId)
     {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
-        address tbaAccountAddress = getAccount(nftAddress, tokenId);
-
-        address linkTokenAddress = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
-        IERC20 linkTokneContract = IERC20(linkTokenAddress);
-        uint256 linkBalance = linkTokneContract.balanceOf(tbaAccountAddress);
-
-
+        
+        if (msg.value < listedItem.price) {
+            revert PriceNotMet(nftAddress, tokenId, listedItem.price);
+        }
 
         s_proceeds[listedItem.seller] += msg.value;
         
@@ -173,6 +203,29 @@ contract Market is ReentrancyGuard {
         );
 
         return Create2.computeAddress(bytes32(0), bytecodeHash);
+    }
+
+    function caluculatePrice(
+        address nftAddress,
+        uint256 tokenId
+    ) public view returns (uint256){
+        address tbaAccountAddress = getAccount(nftAddress, tokenId);
+        uint256 totalBalance = 0;
+        uint256 balance = 0;
+        int256 priceAnswer = 0;
+
+        for (uint i = 0; i < tokenList.length; i++) {
+            IERC20 tokneContract = IERC20(tokenList[i]);
+            balance = tokneContract.balanceOf(tbaAccountAddress);
+
+            AggregatorInterface priceFeed = AggregatorInterface(oracleList[i]);
+            priceAnswer = priceFeed.latestAnswer();
+            
+            totalBalance += uint256(priceAnswer) * balance / (10 ** 8);
+        }
+        
+        return totalBalance;
+        
     }
     
 }
