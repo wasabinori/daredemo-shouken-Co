@@ -4,6 +4,8 @@ import { useState, ChangeEventHandler, FormEventHandler } from "react";
 
 export default function ListNft () {
 
+
+
     const contractAddress = "0xf1028Bb2839716A86A7f27c283d440645470546b";
     const ABI: any = contractABI ;
 
@@ -11,37 +13,45 @@ export default function ListNft () {
     const [tokenId, setTokenId] = useState("");
 
     const handleNftAddressChange: ChangeEventHandler<HTMLInputElement> = ({target}) => {
-        setNftAddress(target.value);};
+        setNftAddress(target.value);
+    };
 
     const handleTokenIdChange: ChangeEventHandler<HTMLInputElement> = ({target}) => {
-        setTokenId(target.value);};
+        setTokenId(target.value);
+    };
+
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+        event.preventDefault();
+    };
 
 
-        const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
-            event.preventDefault();};
+    try {
+        const { ethereum } = window;
+        if (ethereum) {
+          const provider = new ethers.providers.Web3Provider(ethereum);
+          const signer = provider.getSigner();
+          const connectedContract = new ethers.Contract(
+            contractAddress,
+            ABI,
+            signer
+          );
 
+          console.log("Going to pop wallet now to pay gas...");
+          let Txn = await connectedContract.listItem(nftAddress, tokenId);
+          console.log("Listing...please wait.");
+          await Txn.wait();
+          console.log(`Listed, see transaction: https://goerli.etherscan.io/tx/${Txn.hash}`);
 
-    // try {
-    //     const { ethereum } = window;
-    //     if (ethereum) {
-    //       const provider = new ethers.providers.Web3Provider(ethereum);
-    //       const signer = provider.getSigner();
-    //       const connectedContract = new ethers.Contract(
-    //         contractAddress,
-    //         ABI,
-    //         signer
-    //       );
-    //       console.log("Going to pop wallet now to pay gas...");
-    //       let Txn = await connectedContract.listItem(nftAddress, tokenId);
-    //       console.log("Listing...please wait.");
-    //       await Txn.wait();
-    //       console.log(`Listed, see transaction: https://goerli.etherscan.io/tx/${Txn.hash}`);
-    //     } else {
-    //       console.log("Ethereum object doesn't exist!");
-    //     }
-    //  } catch (error) {
-    //     console.log(error);
-    //  }
+        } else {
+          console.log("Ethereum object doesn't exist!");
+        }
+     } catch (error) {
+        console.log(error);
+     }
+
+     useEffect(() => {
+        checkIfWalletIsConnected();
+      }, []);
 
         return(
             <div>

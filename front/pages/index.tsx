@@ -5,7 +5,7 @@ import Image from 'next/image'
 import WalletConnect from '../components/WalletConnect';
 import { useState } from 'react';
 import contractABI from '../ContractABI.json';
-import ListNft from '../components/ListNft';
+//import ListNft from '../components/ListNft';
 
 
 
@@ -21,7 +21,7 @@ const Home: NextPage = () => {
       </div>
 
       <div>
-        <ListNft />
+
       </div>
     </div>
   );

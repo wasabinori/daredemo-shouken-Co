@@ -193,10 +193,10 @@ contract NftMarketplace is ReentrancyGuard {
         isListed(nftAddress, tokenId)
     {
             
-        address tbaAccountAddress = getAccount(nftAddress, tokenId);
+        address _tbaAddress = getAccount(nftAddress, tokenId);
         Listing memory listedItem = s_listings[nftAddress][tokenId];
         listedItem.price = priceCalculation(nftAddress, tokenId);
-        emit priceFixed(nftAddress, tokenId, tbaAccountAddress, listedItem.price);
+        emit priceFixed(nftAddress, tokenId, _tbaAddress, listedItem.price);
 
         buyItem(nftAddress, tokenId);
     }
