@@ -16,6 +16,7 @@ error NotListed(address nftAddress, uint256 tokenId);
 error AlreadyListed(address nftAddress, uint256 tokenId);
 error NotOwner();
 error NoProceeds();
+error NotApprovedForMarketplace();
 
 contract Market is ReentrancyGuard {
     struct Listing {
@@ -92,6 +93,7 @@ contract Market is ReentrancyGuard {
     ) {
         IERC721 nft = IERC721(nftAddress);
         address owner = nft.ownerOf(tokenId);
+        
         if (spender != owner) {
             revert NotOwner();
         }
@@ -102,13 +104,7 @@ contract Market is ReentrancyGuard {
     // Main Functions //
     /////////////////////
 
-    function approve(
-        address nftAddress,
-        uint256 tokenId
-    ) public {
-        IERC721 nft = IERC721(nftAddress);
-        nft.approve(address(this), tokenId);
-    }
+    
 
     function listItem(
         address nftAddress,
@@ -117,15 +113,13 @@ contract Market is ReentrancyGuard {
         external
         notListed(nftAddress, tokenId)
         isOwner(nftAddress, tokenId, msg.sender)
-    {
-        uint256 price = caluculatePrice(nftAddress, tokenId);
-
+    {   
         IERC721 nft = IERC721(nftAddress);
-        
-        require(nft.getApproved(tokenId) == address(this), "NotApprovedForMarketplace");
-        
-        s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
-        emit ItemListed(msg.sender, nftAddress, tokenId, price);
+        if (nft.getApproved(tokenId) != address(this)) {
+            revert NotApprovedForMarketplace();
+        }
+        s_listings[nftAddress][tokenId] = Listing(5000000000000000000, msg.sender);
+        emit ItemListed(msg.sender, nftAddress, tokenId, 5000000000000000000);
     }
 
     function cancelListing(address nftAddress, uint256 tokenId)
@@ -137,21 +131,7 @@ contract Market is ReentrancyGuard {
         emit ItemCanceled(msg.sender, nftAddress, tokenId);
     }
 
-    function buyFlow(
-        address nftAddress,
-        uint256 tokenId
-    )
-        external
-        nonReentrant
-        isListed(nftAddress, tokenId)
-    {
-        address tbaAccountAddress = getAccount(nftAddress, tokenId);
-        Listing memory listedItem = s_listings[nftAddress][tokenId];
-        listedItem.price = caluculatePrice(nftAddress, tokenId);
-        emit priceFixed(nftAddress, tokenId, tbaAccountAddress,listedItem.price);
-
-        buyItem(nftAddress, tokenId);
-    }
+    
 
     function buyItem(address nftAddress, uint256 tokenId)
         payable
@@ -160,13 +140,12 @@ contract Market is ReentrancyGuard {
         isListed(nftAddress, tokenId)
     {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
-        
         if (msg.value < listedItem.price) {
             revert PriceNotMet(nftAddress, tokenId, listedItem.price);
         }
-
         s_proceeds[listedItem.seller] += msg.value;
-        
+        // Could just send the money...
+        // https://fravoll.github.io/solidity-patterns/pull_over_push.html
         delete (s_listings[nftAddress][tokenId]);
         IERC721(nftAddress).safeTransferFrom(listedItem.seller, msg.sender, tokenId);
         emit ItemBought(msg.sender, nftAddress, tokenId, listedItem.price);
@@ -181,6 +160,39 @@ contract Market is ReentrancyGuard {
         (bool success, ) = payable(msg.sender).call{value: proceeds}("");
         require(success, "Transfer failed");
     }*/
+    function caluculatePrice(
+        address nftAddress,
+        uint256 tokenId
+    )   external 
+        isListed(nftAddress, tokenId)
+    {
+        address tbaAccountAddress = getAccount(nftAddress, tokenId);
+        uint256 totalUsdBalance = 0;
+
+        AggregatorInterface ethPriceFeed = AggregatorInterface(ethOracle);
+        int256 ethPrice = ethPriceFeed.latestAnswer(); 
+
+        for (uint i = 0; i < tokenList.length; i++) {
+            IERC20 tokenContract = IERC20(tokenList[i]);
+            uint256 balance = tokenContract.balanceOf(tbaAccountAddress); 
+            
+
+            AggregatorInterface priceFeed = AggregatorInterface(oracleList[i]);
+            int256 priceAnswer = priceFeed.latestAnswer(); 
+            
+
+            totalUsdBalance += uint256(priceAnswer) * balance;
+            console.log("balance: %s", totalUsdBalance);
+        }
+        uint256 ethBalance = tbaAccountAddress.balance;
+
+
+        uint256 truePriceBalance = (totalUsdBalance / uint256(ethPrice)) + ethBalance;
+        //uint256 truePriceBalance = uint256(3000000000000000000) * uint256(598178500) / uint256(184230000000);
+        s_listings[nftAddress][tokenId] = Listing(truePriceBalance, msg.sender);
+        
+        
+    }
 
     
 
@@ -218,37 +230,7 @@ contract Market is ReentrancyGuard {
         return Create2.computeAddress(bytes32(0), bytecodeHash);
     }
 
-    function caluculatePrice(
-        address nftAddress,
-        uint256 tokenId
-    ) public view returns (uint256){
-        address tbaAccountAddress = getAccount(nftAddress, tokenId);
-        uint256 totalUsdBalance = 0;
-
-        AggregatorInterface ethPriceFeed = AggregatorInterface(ethOracle);
-        int256 ethPrice = ethPriceFeed.latestAnswer(); 
-
-        for (uint i = 0; i < tokenList.length; i++) {
-            IERC20 tokenContract = IERC20(tokenList[i]);
-            uint256 balance = tokenContract.balanceOf(tbaAccountAddress); 
-            
-
-            AggregatorInterface priceFeed = AggregatorInterface(oracleList[i]);
-            int256 priceAnswer = priceFeed.latestAnswer(); 
-            
-
-            totalUsdBalance += uint256(priceAnswer) * balance;
-            console.log("balance: %s", totalUsdBalance);
-        }
-        uint256 ethBalance = tbaAccountAddress.balance;
-
-
-        uint256 truePriceBalance = (totalUsdBalance / uint256(ethPrice)) + ethBalance;
-        //uint256 truePriceBalance = uint256(3000000000000000000) * uint256(598178500) / uint256(184230000000);
-        
-        return truePriceBalance;
-        
-    }
+    
 
      
 }
