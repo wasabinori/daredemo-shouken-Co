@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@alch/alchemy-sdk": "^1.2.0",
+    "alchemy-sdk": "^2.9.0",
     "daisyui": "^3.0.20",
     "ethers": "^6.5.1",
     "next": "13.4.4",
