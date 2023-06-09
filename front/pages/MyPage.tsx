@@ -16,14 +16,7 @@ const Mypage = () => {
                     // 接続されたアカウントの情報を取得
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                     setAddress(accounts[0]);
-                    // 所持しているNFTの一覧を取得
-                    // TODO: NFTの一覧を取得する処理を追加してください
-                    // テスト用のデータをセットします
-                    setNFTs([
-                        { id: 1, name: 'NFT 1' },
-                        { id: 2, name: 'NFT 2' },
-                        { id: 3, name: 'NFT 3' },
-                    ]);
+                    
                 } catch (error) {
                     console.error('Failed to connect to Metamask:', error);
                 }
@@ -42,11 +35,7 @@ const Mypage = () => {
     <div>
         <h1>アドレス: {address}</h1>
         <h2>所持しているNFT一覧:</h2>
-        <ul>
-            {nfts.map((nft) => (
-            <li key={nft.id}>{nft.name}</li>
-            ))}
-        </ul>
+        
     </div>
     );
 };
