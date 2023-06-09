@@ -11,7 +11,6 @@ import {
 export default function WalletConnect (): any {
 
     const [address, setAddress] = useState<string | null>(null);
-    const [nftList, setNftList] = useState<string[]>([]);
     const [connected, setConnected] = useState<boolean>(false);
 
     const connectToMetamask = async () => {
@@ -19,7 +18,7 @@ export default function WalletConnect (): any {
             try {
                 // Metamaskの接続リクエスト
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const provider = new ethers.providers.Web3Provider(window.ethereum);// 思ったように動かない原因としてここが怪しそう？
                 const signer = provider.getSigner();
                 // 接続されたアカウントの情報を取得
                 const connectedAddress = await signer.getAddress();
@@ -36,17 +35,17 @@ export default function WalletConnect (): any {
 
 
         const navigateToMyPage = () =>  {
-            window.location.href = '/MyPage';
+            window.location.href = '/MyPage'; // MyPageに遷移する関数
         };
 
         return (
           <div>
             {connected ? (
               <div>
-                <p>Connected address: {address}</p>
+                <p>Connected address: {address}</p> {/* 取得したアドレスを表示 */}
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-                  onClick={navigateToMyPage}
+                  onClick={navigateToMyPage} // WalletConnectしたらMyPageに遷移するボタンが出る
                 >
                   Go to My Page
                 </button>
