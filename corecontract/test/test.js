@@ -53,21 +53,29 @@ describe("Nft Marketplace Unit Tests", function () {
       const result = await testNftMarketplace.getAccount(basicNft.address, TOKEN_ID)
       console.log("result: ", result)
 
+      
+
       expect(await testNftMarketplace.connect(user).listItem(basicNft.address, TOKEN_ID)).to.emit(testNftMarketplace, "ItemListed")
       
       const result2 = await testNftMarketplace.getListing(basicNft.address, TOKEN_ID)
       console.log("result2: ", result2)
 
-      await testNftMarketplace.connect(user2).buyItem(basicNft.address, TOKEN_ID, {value: 3})
+      await testNftMarketplace.connect(user2).buyItem(basicNft.address, TOKEN_ID, {value: "9740734408076860"})
       const result3 = await testNftMarketplace.getListing(basicNft.address, TOKEN_ID)
       console.log("result3: ", result3)
 
       const balance5 = await ethers.provider.getBalance(user2.address);
       console.log("user2Balance: ", balance5)
 
-      const c = 0.026 * 10 ** 18;
-      console.log("c: ", c);
-      //await testNftMarketplace.connect(user).listItem(basicNft.address, 0)
+      const a = 3000000000000000000 * 598178500;
+      console.log("a: ", a);
+
+      const b = a / 184230000000;
+      console.log("b: ", b);
+
+      const c = await testNftMarketplace.caluculatePrice(basicNft.address, 0)
+      console.log("c: ", c)
+
  
   })
 })

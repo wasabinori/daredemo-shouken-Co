@@ -18,6 +18,8 @@ async function main() {
 
   console.log("Contract address:", testMarket.address);
 
+  
+
 }
 
 main()

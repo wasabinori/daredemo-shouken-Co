@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol";
 import "./IERC6551Registry.sol";
 import "./ERC6551BytecodeLib.sol";
+import "hardhat/console.sol";
 
 error PriceNotMet(address nftAddress, uint256 tokenId, uint256 price);
 error NotListed(address nftAddress, uint256 tokenId);
@@ -54,15 +55,15 @@ contract Market is ReentrancyGuard {
 
     address[] private oracleList = 
         [0x0d79df66BE487753B02D015Fb622DED7f0E9798d, // DAI
-        0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e, // ETH
         0x48731cF7e84dc94C5f84577882c14Be11a5B7456, // LINK
         0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7];  // USDC
 
+    address private ethOracle = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e; // ETH
+
     address[] private tokenList = 
         [0x73967c6a0904aA032C103b4104747E88c566B1A2, // DAI
-        0xdD69DB25F6D620A7baD3023c5d32761D353D3De9, // ETH
         0x326C977E6efc84E512bB9C30f76E30c160eD06FB, // LINK
-        0xd35CCeEAD182dcee0F148EbaC9447DA2c4D449c4]; // USDC
+        0x07865c6E87B9F70255377e024ace6630C1Eaa37F]; // USDC
     
 
     modifier notListed(
@@ -101,6 +102,14 @@ contract Market is ReentrancyGuard {
     // Main Functions //
     /////////////////////
 
+    function approve(
+        address nftAddress,
+        uint256 tokenId
+    ) public {
+        IERC721 nft = IERC721(nftAddress);
+        nft.approve(address(this), tokenId);
+    }
+
     function listItem(
         address nftAddress,
         uint256 tokenId
@@ -109,10 +118,11 @@ contract Market is ReentrancyGuard {
         notListed(nftAddress, tokenId)
         isOwner(nftAddress, tokenId, msg.sender)
     {
-        IERC721 nft = IERC721(nftAddress);
-        require(nft.getApproved(tokenId) == address(this), "NotApprovedForMarketplace");
-        
         uint256 price = caluculatePrice(nftAddress, tokenId);
+
+        IERC721 nft = IERC721(nftAddress);
+        
+        require(nft.getApproved(tokenId) == address(this), "NotApprovedForMarketplace");
         
         s_listings[nftAddress][tokenId] = Listing(price, msg.sender);
         emit ItemListed(msg.sender, nftAddress, tokenId, price);
@@ -215,26 +225,31 @@ contract Market is ReentrancyGuard {
         address tbaAccountAddress = getAccount(nftAddress, tokenId);
         uint256 totalUsdBalance = 0;
 
-        AggregatorInterface ethPriceFeed = AggregatorInterface(oracleList[1]);
-        int256 ethPrice = ethPriceFeed.latestAnswer() / (10 ** 8); //1860usd/eth
+        AggregatorInterface ethPriceFeed = AggregatorInterface(ethOracle);
+        int256 ethPrice = ethPriceFeed.latestAnswer(); 
 
         for (uint i = 0; i < tokenList.length; i++) {
             IERC20 tokenContract = IERC20(tokenList[i]);
-            uint256 balance = tokenContract.balanceOf(tbaAccountAddress); // 0dai, 0.005eth, 1link, 0usdc 18桁増し
+            uint256 balance = tokenContract.balanceOf(tbaAccountAddress); 
+            
 
             AggregatorInterface priceFeed = AggregatorInterface(oracleList[i]);
-            int256 priceAnswer = priceFeed.latestAnswer(); // 0usd, ?usd, ?usd, 0usd 8桁増し
+            int256 priceAnswer = priceFeed.latestAnswer(); 
+            
 
-            totalUsdBalance += uint256(priceAnswer) * balance / (10 ** 26);
+            totalUsdBalance += uint256(priceAnswer) * balance;
+            console.log("balance: %s", totalUsdBalance);
         }
+        uint256 ethBalance = tbaAccountAddress.balance;
 
-        uint256 truePriceBalance = totalUsdBalance / uint256(ethPrice);
-        // truePriceBalance 0.026・・・ = $50 / 1860usd/eth
-        uint256 trueEthPrice = truePriceBalance * (10 ** 18);
-        //trueEthPrice 0.026・・・ = 0.026・・・ * 10 ** 18
-        return trueEthPrice;
+
+        uint256 truePriceBalance = (totalUsdBalance / uint256(ethPrice)) + ethBalance;
+        //uint256 truePriceBalance = uint256(3000000000000000000) * uint256(598178500) / uint256(184230000000);
+        
+        return truePriceBalance;
         
     }
+
      
 }
 
