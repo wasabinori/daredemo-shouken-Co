@@ -12,12 +12,12 @@ const fetchData = async () => {
         apikey: "0pKIAXtqho6DikSSdbB-QuyB1dyjwfCy",
         network: Network.ETH_GOERLI,
         maxRetries: 10,
-    };
+    }; // Alchemyの設定
     const alchemy = initializeAlchemy(settings);
     // 接続されたアカウントの情報を取得
     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-    setAddress(accounts[0]);
-    const tmpNFTs = await getNftsForOwner(alchemy, accounts[0]);
+    setAddress(accounts[0]); // walletのアドレスをセット
+    const tmpNFTs = await getNftsForOwner(alchemy, accounts[0]); // Wallet内のNFTを取得
 
     setNFTs([tmpNFTs]);
 };
@@ -50,14 +50,14 @@ const fetchData = async () => {
         <div>
             <h1>{address}</h1>
             {Array.isArray(NFTs) && NFTs.map((item, index) => (
-            <div key={index}>
-                {item.totalCount === 0 && <div>You have no NFT.</div>}
-                {item.totalCount === 1 && <div>You have 1 NFT.</div>}
-                {item.totalCount >= 2 && <div>You have {item.totalCount} NFTs.</div>}
+            <div key={index}> {/* NFTを表示するためのkey */}
+                {item.totalCount === 0 && <div>You have no NFT.</div>} {/* NFTがない場合 */}
+                {item.totalCount === 1 && <div>You have 1 NFT.</div>} {/* NFTが1つの場合 */}
+                {item.totalCount >= 2 && <div>You have {item.totalCount} NFTs.</div>} {/* NFTが2つ以上の場合 */}
                 <div>
-                    {item.totalCount > 0 && (
+                    {item.totalCount > 0 && ( // NFTがある場合のみ表示
                         <div>
-                            {item.ownedNfts.map((item, index) => (
+                            {item.ownedNfts.map((item, index) => ( // NFTの詳細を表示する処理を所持NFTの数だけ繰り返す
                                 <div key={index}>
                                     <div>NFT: {index + 1}</div>
                                     <div>Title:「{item.title}」</div>
