@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 const Mypage = () => {
     const [connected, setConnected] = useState(false);
     const [address, setAddress] = useState('');
-    const [nfts, setNFTs] = useState([]);
 
     useEffect(() => {
         const checkWalletConnection = async () => {
