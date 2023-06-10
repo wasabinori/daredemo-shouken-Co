@@ -7,6 +7,7 @@
 const hre = require("hardhat");
 
 async function main() {
+
   const [deployer] = await ethers.getSigners();
 
   console.log("Deploying contracts with the account:", deployer.address);
@@ -17,8 +18,6 @@ async function main() {
   const testMarket = await market.deploy();
 
   console.log("Contract address:", testMarket.address);
-
-  
 
 }
 
