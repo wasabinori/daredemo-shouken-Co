@@ -8,16 +8,22 @@ const hre = require("hardhat");
 
 async function main() {
 
-  const Lock = await hre.ethers.getContractFactory("NftMarketplace");
-  const lock = await Lock.deploy();
+  const [deployer] = await ethers.getSigners();
 
-  await lock.deployed();
-  console.log("contract address is", lock.address);
+  console.log("Deploying contracts with the account:", deployer.address);
+
+  console.log("Account balance:", (await deployer.getBalance()).toString());
+
+  const market = await ethers.getContractFactory("Market");
+  const testMarket = await market.deploy();
+
+  console.log("Contract address:", testMarket.address);
+
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
