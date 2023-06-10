@@ -1,6 +1,7 @@
 import contractABI from "../ContractABI.json"
 import { useState, ChangeEventHandler, FormEventHandler } from "react";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
+import { number, string } from "prop-types";
 
 
 export default function WalletConnect ({address, setAddress} :any ): any {
@@ -53,6 +54,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
         //BuyNft関数呼び出し
       const [buyNftAddress, setBuyNftAddress] = useState("");
       const [buyTokenId, setBuyTokenId] = useState<number>();
+      const [sendPrice, setSendPrice] = useState<string>("");
 
       const handleBuyNftAddressChange: ChangeEventHandler<HTMLInputElement> = ({target}) => {
       setBuyNftAddress(target.value);
@@ -60,6 +62,10 @@ export default function WalletConnect ({address, setAddress} :any ): any {
 
       const handleBuyTokenIdChange: ChangeEventHandler<HTMLInputElement> = ({target}) => {
       setBuyTokenId(Number(target.value));
+      };
+
+      const handleSendPrice: ChangeEventHandler<HTMLInputElement> = ({target}) => {
+      setSendPrice(String(target.value));
       };
 
       const handleBuySubmit: FormEventHandler<HTMLFormElement> = (event) => {
@@ -85,7 +91,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
               console.log("Going to pop wallet now to pay gas...");
               const gasLimit = 300000; // ガス制限の値を適切に設定
                 
-              let mainTxn = await connectedContract.listItem(nftAddress, tokenId, { gasLimit });
+              const mainTxn = await connectedContract.listItem(nftAddress, tokenId, { gasLimit });
               console.log("Listining...please wait.");
               await mainTxn.wait();
               console.log(
@@ -124,7 +130,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
               const gasLimit = 300000; // ガス制限の値を適切に設定
                 
               console.log("Approve NFT to Market contract...");
-              let firstTxn = await nftContract.approve(contractAddress, tokenId, { gasLimit });
+              const firstTxn = await nftContract.approve(contractAddress, tokenId, { gasLimit });
               console.log("Approving...please wait.");
               
               await firstTxn.wait();
@@ -159,7 +165,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
               console.log("Going to pop wallet now to pay gas...");
               const gasLimit = 300000; // ガス制限の値を適切に設定
   
-              let firstTxn = await connectedContract.caluclatePrice(buyNftAddress, buyTokenId, { gasLimit });
+              const firstTxn = await connectedContract.caluculatePrice(buyNftAddress, buyTokenId, { gasLimit });
               console.log("Price Caluclating...please wait.");
               await firstTxn.wait();
               console.log(
@@ -194,25 +200,14 @@ export default function WalletConnect ({address, setAddress} :any ): any {
 
             
             console.log("Going to pop wallet now to pay gas...");
-            const gasLimit = 30000000; // ガス制限の値を適切に設定
+            const gasLimit = 300000000000; // ガス制限の値を適切に設定
 
-            let firstTxn = await connectedContract.caluclatePrice(buyNftAddress, buyTokenId, { gasLimit });
-            console.log("Price Caluclating...please wait.");
-            await firstTxn.wait();
-            console.log(
-              `Price Update, see transaction: https://goerli.etherscan.io/tx/${firstTxn.hash}`
-            );
+            // const bigNumberValue = ethers.BigNumber.from(sendPrice);
+            // const _sendPrice: string = ethers.utils.formatEther(bigNumberValue);
+            // const parsedSendPrice: ethers.BigNumber = ethers.utils.parseEther(_sendPrice);
 
-            // let secondTxn = await connectedContract.(nftAddress, tokenId, { gasLimit });
-            // console.log("Price updating...please wait.");
-            // await secondTxn.wait();
-            // console.log(
-            //   `Listed, see transaction: https://goerli.etherscan.io/tx/${secondTxn.hash}`
-            // );
-
-
-            let mainTxn = await connectedContract.buyItem(buyNftAddress, buyTokenId, { gasLimit });
-            console.log("Listining...please wait.");
+            const mainTxn = await connectedContract.buyItem(buyNftAddress, buyTokenId, {value: ethers.utils.parseEther("0.001")},{ gasLimit } );
+            console.log("Buying...please wait.");
             await mainTxn.wait();
             console.log(
               `YOU Get NFT, see transaction: https://goerli.etherscan.io/tx/${mainTxn.hash}`
@@ -305,6 +300,12 @@ export default function WalletConnect ({address, setAddress} :any ): any {
             </button>
           </form>
       <div>
+            <input 
+            className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+            type="text" value={sendPrice} 
+            placeholder="Item Price..."
+            onChange={handleSendPrice} />
+
 
             <button 
             type="submit"
