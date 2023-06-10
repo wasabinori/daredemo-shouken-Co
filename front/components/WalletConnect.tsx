@@ -67,8 +67,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
       };
 
 
-
-      const listNft = async () => {
+      const ListNft = async () => {
         const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
         const ABI: any = contractABI ;
 
@@ -83,9 +82,43 @@ export default function WalletConnect ({address, setAddress} :any ): any {
                 signer
               );
 
+              console.log("Going to pop wallet now to pay gas...");
+              const gasLimit = 300000; // ガス制限の値を適切に設定
+                
+              let mainTxn = await connectedContract.listItem(nftAddress, tokenId, { gasLimit });
+              console.log("Listining...please wait.");
+              await mainTxn.wait();
+              console.log(
+                `Listed, see transaction: https://goerli.etherscan.io/tx/${mainTxn.hash}`
+              );
+            } else {
+              console.log("Ethereum object doesn't exist!");
+            }
+
+          } catch (error) {
+            console.log(error);
+          }
+        }
+
+
+      const ApproveNft = async () => {
+        const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
+        const ABI: any = contractABI ;
+
+        try {
+            const { ethereum } = window;
+            if (ethereum) {
+              const provider = new ethers.providers.Web3Provider(ethereum);
+              const signer = provider.getSigner();
+              const connectedContract = new ethers.Contract(
+                contractAddress,
+                ABI.abi,
+                signer
+              );
+
+              // NFTのアドレスとABIを指定
               const _nftABI = JSON.parse(nftABI);
               const nftContract = new ethers.Contract(nftAddress, _nftABI, signer);
-
 
               console.log("Going to pop wallet now to pay gas...");
               const gasLimit = 300000; // ガス制限の値を適切に設定
@@ -98,13 +131,41 @@ export default function WalletConnect ({address, setAddress} :any ): any {
               console.log(
                 `Approved, see transaction: https://goerli.etherscan.io/tx/${firstTxn.hash}`
               );
+            } else {
+              console.log("Ethereum object doesn't exist!");
+            }
 
-              let mainTxn = await connectedContract.listItem(nftAddress, tokenId, { gasLimit });
-              console.log("Listining...please wait.");
-              await mainTxn.wait();
-              console.log(
-                `Listed, see transaction: https://goerli.etherscan.io/tx/${mainTxn.hash}`
+          } catch (error) {
+            console.log(error);
+          }
+        }
+
+        const Pricing = async () => {
+          const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
+          const ABI: any = contractABI ;
+  
+          try {
+            const { ethereum } = window;
+            if (ethereum) {
+              const provider = new ethers.providers.Web3Provider(ethereum);
+              const signer = provider.getSigner();
+              const connectedContract = new ethers.Contract(
+                contractAddress,
+                ABI.abi,
+                signer
               );
+  
+              
+              console.log("Going to pop wallet now to pay gas...");
+              const gasLimit = 300000; // ガス制限の値を適切に設定
+  
+              let firstTxn = await connectedContract.caluclatePrice(buyNftAddress, buyTokenId, { gasLimit });
+              console.log("Price Caluclating...please wait.");
+              await firstTxn.wait();
+              console.log(
+                `Price Update, see transaction: https://goerli.etherscan.io/tx/${firstTxn.hash}`
+              );
+  
             } else {
               console.log("Ethereum object doesn't exist!");
             }
@@ -112,6 +173,9 @@ export default function WalletConnect ({address, setAddress} :any ): any {
             console.log(error);
           }
         }
+
+
+
 
       const BuyNft = async () => {
         const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
@@ -176,7 +240,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
                 </button>
             </div>
 
-          {/* listitem */}
+          {/* approveItem */}
         </div>
           <form onSubmit={handleSubmit}>
             <input 
@@ -199,14 +263,22 @@ export default function WalletConnect ({address, setAddress} :any ): any {
             <button 
             type="submit"
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
-            onClick={listNft}
+            onClick={ApproveNft}
             >
-                Listing!!
+                approvingNFT
             </button>
           </form>
         <div>
-          {/* 一行あけたい */}
-          <div></div>
+          {/* listItem */}
+          <div>
+          <button 
+            type="submit"
+            className="bg-yellow-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
+            onClick={ListNft}
+            >
+                listNFT
+            </button>
+          </div>
         </div>
 
         {/* BuyNft */}
@@ -227,12 +299,21 @@ export default function WalletConnect ({address, setAddress} :any ): any {
             <button 
             type="submit"
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
-            onClick={BuyNft}
+            onClick={Pricing}
             >
-                BuyNFT!!
+                Pricing
             </button>
           </form>
+      <div>
 
+            <button 
+            type="submit"
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
+            onClick={BuyNft}
+            >
+            BuyNFT!!
+            </button>
+      </div>
         <div>
         </div>
     </div>

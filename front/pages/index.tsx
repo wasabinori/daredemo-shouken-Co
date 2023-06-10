@@ -16,8 +16,9 @@ const Home: NextPage = () => {
   return (
     <div className="">
       <WalletConnect address={address} setAddress={setAddress}/>
+      {address && <p>Connected Address: {address}</p>}
       <div>
-        {address && <p>Connected Address: {address}</p>}
+        
       </div>
 
       <div>
