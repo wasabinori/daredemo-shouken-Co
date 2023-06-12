@@ -7,12 +7,12 @@ module.exports = {
   solidity: "0.8.18",
 
   networks: {
-    goerli: {
-      url: `${process.env.ALCHEMY_KEY}`,
-      accounts: [process.env.SEACRET_KEY],
-    }
+    // goerli: {
+    //   url: `${process.env.ALCHEMY_KEY}`,
+    //   accounts: [process.env.SEACRET_KEY],
+    // }
   },
-    etherscan: {
-      apiKey: process.env.API_KEY,
-    },
+    // etherscan: {
+    //   apiKey: process.env.API_KEY,
+    // },
 };

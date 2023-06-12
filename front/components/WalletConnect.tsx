@@ -5,6 +5,7 @@ import { number, string } from "prop-types";
 
 
 export default function WalletConnect ({address, setAddress} :any ): any {
+    const marketPlaceContractAddress = "0xD6770640A9fE7A348a624fA63ec4d44047b2E2C2";
 
 
 
@@ -74,7 +75,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
 
 
       const ListNft = async () => {
-        const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
+        const contractAddress = marketPlaceContractAddress;
         const ABI: any = contractABI ;
 
         try {
@@ -108,23 +109,24 @@ export default function WalletConnect ({address, setAddress} :any ): any {
 
 
       const ApproveNft = async () => {
-        const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
-        const ABI: any = contractABI ;
+        const contractAddress = marketPlaceContractAddress;
+        //const ABI: any = contractABI ;
+        const nftContractAddress = nftAddress;
 
         try {
             const { ethereum } = window;
             if (ethereum) {
               const provider = new ethers.providers.Web3Provider(ethereum);
               const signer = provider.getSigner();
-              const connectedContract = new ethers.Contract(
-                contractAddress,
-                ABI.abi,
-                signer
-              );
+              // const connectedContract = new ethers.Contract(
+              //   contractAddress,
+              //   ABI.abi,
+              //   signer
+              // );
 
               // NFTのアドレスとABIを指定
               const _nftABI = JSON.parse(nftABI);
-              const nftContract = new ethers.Contract(nftAddress, _nftABI, signer);
+              const nftContract = new ethers.Contract(nftContractAddress, _nftABI, signer);
 
               console.log("Going to pop wallet now to pay gas...");
               const gasLimit = 300000; // ガス制限の値を適切に設定
@@ -147,8 +149,10 @@ export default function WalletConnect ({address, setAddress} :any ): any {
         }
 
         const Pricing = async () => {
-          const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
-          const ABI: any = contractABI ;
+          const contractAddress = marketPlaceContractAddress;
+          const ABI: any = contractABI;
+          const _buyNftAddress = buyNftAddress;
+          const _buyTokenId = buyTokenId;
   
           try {
             const { ethereum } = window;
@@ -163,9 +167,9 @@ export default function WalletConnect ({address, setAddress} :any ): any {
   
               
               console.log("Going to pop wallet now to pay gas...");
-              const gasLimit = 300000; // ガス制限の値を適切に設定
+              const gasLimit = 2000000; // ガス制限の値を適切に設定
   
-              const firstTxn = await connectedContract.caluculatePrice(buyNftAddress, buyTokenId, { gasLimit });
+              const firstTxn = await connectedContract.caluculatePrice(_buyNftAddress, _buyTokenId, { gasLimit });
               console.log("Price Caluclating...please wait.");
               await firstTxn.wait();
               console.log(
@@ -184,7 +188,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
 
 
       const BuyNft = async () => {
-        const contractAddress = "0x07Df80b689fbaFE02F48e364ECEA95aD9562A638";
+        const contractAddress = marketPlaceContractAddress;
         const ABI: any = contractABI ;
 
         try {
@@ -200,13 +204,13 @@ export default function WalletConnect ({address, setAddress} :any ): any {
 
             
             console.log("Going to pop wallet now to pay gas...");
-            const gasLimit = 300000000000; // ガス制限の値を適切に設定
+            const gasLimit = 2000000; // ガス制限の値を適切に設定
 
             // const bigNumberValue = ethers.BigNumber.from(sendPrice);
             // const _sendPrice: string = ethers.utils.formatEther(bigNumberValue);
             // const parsedSendPrice: ethers.BigNumber = ethers.utils.parseEther(_sendPrice);
 
-            const mainTxn = await connectedContract.buyItem(buyNftAddress, buyTokenId, {value: ethers.utils.parseEther("0.001")},{ gasLimit } );
+            const mainTxn = await connectedContract.buyItem(buyNftAddress, buyTokenId, {gasLimit, value: ethers.utils.parseEther("0.001")} );
             console.log("Buying...please wait.");
             await mainTxn.wait();
             console.log(
@@ -222,7 +226,7 @@ export default function WalletConnect ({address, setAddress} :any ): any {
       }
 
     return(
-    <div>
+    <div className="max-w-6xl mx-auto OutermostBox sticky  justify-between shadow-lg px-2 py-2">
         {/* haeder */}
         <div className="max-w-6xl mx-auto OutermostBox sticky  justify-between shadow-lg px-2 py-2">
             <div className="flex flex-row gap-x-5 gap-y-20">

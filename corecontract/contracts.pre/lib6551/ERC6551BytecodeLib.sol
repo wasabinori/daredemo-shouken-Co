@@ -1,5 +1,3 @@
-
-
 library ERC6551BytecodeLib {
     function getCreationCode(
         address implementation_,
